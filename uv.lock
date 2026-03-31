@@ -6,6 +6,12 @@ resolution-markers = [
     "python_full_version < '3.14'",
 ]
 
+[manifest]
+members = [
+    "deepsearch-demo",
+    "langchain-demo",
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -442,6 +448,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/5a/ef/0b2ccd5e4f40c1554
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/77/63a5cb4e3a8871c4a52d600661a232c26b35f52931ee551c3adc38eeacf6/deepagents-0.4.12-py3-none-any.whl", hash = "sha256:76a272bac25607c5ef8c5adc876e391da945f1107b504686964dfdb6afdc1ebb", size = 104455, upload-time = "2026-03-20T14:54:28.786Z" },
 ]
+
+[[package]]
+name = "deepsearch-demo"
+version = "0.1.0"
+source = { editable = "projects/deepsearch-demo" }
 
 [[package]]
 name = "defusedxml"

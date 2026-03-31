@@ -15,3 +15,12 @@ dependencies = [
     "socksio>=1.0.0",
     "tavily-python>=0.7.23",
 ]
+
+[tool.uv]
+managed = true
+
+[tool.uv.sources]
+deepsearch-demo = { workspace = true }
+
+[tool.uv.workspace]
+members = ["projects/*"]
