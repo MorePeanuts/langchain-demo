@@ -5,7 +5,7 @@ from langgraph.types import Command
 from langgraph.graph import StateGraph, START, END
 from loguru import logger
 from .state import State, Paragraph
-from .schema import ReportStructure, ReflectionSummary
+from .schema import ReportStructure, ReflectionSummary, FinalReport
 from .tools import tavily_search
 from .utils import truncate_content
 
@@ -270,4 +270,45 @@ Paragraph latest state: {paragraph.research.latest_summary}
         )
 
     def generate_final_report(self, state: State) -> Command:
-        return Command()
+        prompt = """
+You are a deep research assistant. You have completed the research and constructed the final version of all paragraphs in the report.
+
+You will receive the title of each paragraph after multiple rounds of iterative reflection and the latest information state.
+
+Your task is to format the report into an aesthetically pleasing form and return it in Markdown format.
+
+If there is no conclusion paragraph, please add a conclusion at the end of the report based on the latest status of the other paragraphs.
+
+Use paragraph headings to create the title of the report.
+"""
+        user_prompt = """
+Below are the title and latest state of each paragraph:
+"""
+        for paragraph in state.paragraphs:
+            user_prompt += f"""
+Title: {paragraph.title}
+Latest state: {paragraph.research.latest_summary}\n
+"""
+
+        llm_with_structure = self.llm.with_structured_output(FinalReport)
+        logger.info('Final report generation is in progress...')
+
+        try:
+            response = llm_with_structure.invoke(
+                [
+                    SystemMessage(prompt),
+                    HumanMessage(user_prompt),
+                ]
+            )
+            assert isinstance(response, FinalReport)
+        except Exception:
+            logger.exception('Exception occurred while running generate_final_report.')
+            raise
+
+        return Command(
+            update={
+                'final_report': response.report_content,
+                'is_completed': True,
+                'report_title': response.report_title,
+            }
+        )

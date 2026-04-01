@@ -17,3 +17,8 @@ class ReflectionSummary(BaseModel):
         description='Whether to terminate iterative reflection. If you believe the information is sufficient and iterative thinking can be terminated, set this field to True.'
     )
     summary: str = Field(description='Latest state of the paragraph')
+
+
+class FinalReport(BaseModel):
+    report_title: str = Field(description='Title of the final report')
+    report_content: str = Field(description='The content of the final report')
