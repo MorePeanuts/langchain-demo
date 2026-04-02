@@ -10,12 +10,12 @@ from loguru import logger
 from .state import State, Paragraph
 from .schema import ReportStructure, ReflectionSummary, FinalReport
 from .tools import tavily_search
-from .utils import truncate_content, now
+from .utils import truncate_content, now, isotime
 
 
 class DeepSearchAgent:
     def __init__(self, save_dir: Path | None = None, max_reflections: int = 3):
-        self.llm = init_chat_model('deepseek-chat')
+        self.llm = init_chat_model('deepseek-chat', max_tokens=8192)
         self.max_reflections = max_reflections
         self.save_dir = save_dir
         self.agent = (
@@ -46,7 +46,7 @@ class DeepSearchAgent:
         response = self.agent.invoke(self.state)
         if self.save_dir:
             self.output.close()
-        logger.info('Final output:')
+        print('Final output:\n')
         AIMessage(response['final_report']).pretty_print()
 
     def plot_graph(self, path: Path):
@@ -57,13 +57,13 @@ class DeepSearchAgent:
     def _save_messages(self, messages, node_name):
         if self.save_dir:
             self.output.write(
-                '=============================== Message Metadata ==============================='
+                '=============================== Messages Metadata ==============================\n'
             )
             self.output.write(f'Node: {node_name}\n')
-            self.output.write(f'Time: {now()}\n\n')
+            self.output.write(f'Time: {isotime()}\n\n')
             for msg in messages:
                 self.output.write(msg.pretty_repr())
-                self.output.write('\n')
+                self.output.write('\n\n\n\n')
 
     def generate_report_structure(self, state: State) -> Command[Literal['first_search']]:
         logger.info('Generating the report structure based on above query.')
@@ -98,7 +98,7 @@ Once the outline is created, you will be provided with tools to search the web a
             f'The report structure has been generated, consisting of {len(paragraphs)} paragraphs.'
         )
         for idx, paragraph in enumerate(paragraphs, 1):
-            logger.info(f'\t{idx}. {paragraph["title"]}')
+            logger.info(f'\t{idx}. {paragraph.title}')
 
         self._save_messages(messages, 'generate_report_structure')
 
@@ -124,7 +124,7 @@ Your task is to think about this topic and provide the best web search query to 
         paragraph_index = state.paragraph_index
         paragraphs = state.paragraphs
         paragraph = paragraphs[paragraph_index]
-        logger.info(f'Processing paragraph {paragraph_index}, performing first search.')
+        logger.info(f'Processing paragraph {paragraph_index + 1}, performing first search.')
 
         user_prompt = f'Title: {paragraph.title}\nContent: {paragraph.content}'
         messages = [SystemMessage(prompt), HumanMessage(user_prompt)]
@@ -157,13 +157,13 @@ Please generate the content directly, without producing irrelevant information.
         paragraphs = state.paragraphs
         paragraph = paragraphs[paragraph_index]
         search_history = paragraph.research.search_history
-        logger.info(f'Processing paragraph {paragraph_index}, performing first summary.')
+        logger.info(f'Processing paragraph {paragraph_index + 1}, performing first summary.')
 
         user_prompt = f'Title: {paragraph.title}\nContent: {paragraph.content}\n'
         if len(search_history) > 0:
             user_prompt += f'Search query: {search_history[0].search_query}\n'
         for idx, search_result in enumerate(search_history):
-            user_prompt += f'\tSearch result {idx}: {truncate_content(search_result.content)}'
+            user_prompt += f'\tSearch result {idx}: {truncate_content(search_result.content)}\n\n'
 
         messages = [SystemMessage(prompt), HumanMessage(user_prompt)]
 
@@ -173,9 +173,9 @@ Please generate the content directly, without producing irrelevant information.
         except Exception:
             logger.exception('Exception while running first_summary.')
             raise
-        paragraph.research.latest_summary = ai_msg.pretty_repr()
+        paragraph.research.latest_summary = ai_msg.content  # type: ignore
         logger.info(
-            f'First summary for paragraph {paragraph_index}: {truncate_content(paragraph.research.latest_summary, 100)}'
+            f'First summary for paragraph {paragraph_index + 1}: {truncate_content(paragraph.research.latest_summary, 100)}'
         )
 
         self._save_messages(messages, 'first_summary')
@@ -195,7 +195,7 @@ You can use a web search tool that takes `search_query` as a parameter. Your tas
         paragraph = paragraphs[paragraph_index]
         paragraph.research.reflection_iteration += 1
         logger.info(
-            f'Iterating through paragraph {paragraph_index}, currently on the {paragraph.research.reflection_iteration} iteration...'
+            f'Iterating through paragraph {paragraph_index + 1}, currently on the {paragraph.research.reflection_iteration} iteration...'
         )
 
         user_prompt = f"""
@@ -247,7 +247,7 @@ If you believe you have obtained sufficient information, you can terminate the i
         reflection_iteration = paragraph.research.reflection_iteration
         search_history = paragraph.research.search_history
         logger.info(
-            f'Summarizing paragraph {paragraph_index}, currently on the {paragraph.research.reflection_iteration} iteration...'
+            f'Summarizing paragraph {paragraph_index + 1}, currently on the {paragraph.research.reflection_iteration} iteration...'
         )
 
         user_prompt = f"""
@@ -276,7 +276,7 @@ Paragraph latest state: {paragraph.research.latest_summary}
         paragraph.research.latest_summary = summary.summary
         stop_reflection = summary.stop_reflection
         logger.info(
-            f'Summary of {reflection_iteration} iteration paragraph {paragraph_index}: {truncate_content(summary.summary)}'
+            f'Summary of {reflection_iteration} iteration paragraph {paragraph_index + 1}: {truncate_content(summary.summary)}'
         )
 
         self._save_messages(messages, 'reflection_summary')
@@ -337,6 +337,11 @@ Latest state: {paragraph.research.latest_summary}\n
             raise
 
         self._save_messages(messages, 'generate_final_report')
+
+        if self.save_dir:
+            report_path = self.save_dir / 'report.md'
+            with report_path.open('w') as f:
+                f.write(report.report_content)
 
         return {
             'final_report': report.report_content,

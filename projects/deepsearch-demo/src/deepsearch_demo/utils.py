@@ -15,3 +15,7 @@ def truncate_content(content: str, max_length: int = 50000) -> str:
 
 def now() -> str:
     return datetime.now().strftime('%y%m%d_%H%M%S')
+
+
+def isotime() -> str:
+    return datetime.now().isoformat()
