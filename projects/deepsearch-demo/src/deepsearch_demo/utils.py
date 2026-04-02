@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-def truncate_content(content: str, max_length: int = 50000) -> str:
+def truncate_content(content: str, max_length: int = 200000) -> str:
     if len(content) <= max_length:
         return content
 
