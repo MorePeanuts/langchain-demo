@@ -38,7 +38,7 @@ class DeepSearchAgent:
             logger.add(sys.stderr, level='DEBUG')
             logger.add(self.log_path, level='DEBUG')
 
-    def research(self, query: str) -> str:
+    def research(self, query: str):
         logger.info(f'Start research: {query}')
         if self.save_dir:
             self.output = open(self.output_path, 'a')
@@ -46,7 +46,8 @@ class DeepSearchAgent:
         response = self.agent.invoke(self.state)
         if self.save_dir:
             self.output.close()
-        return AIMessage(response['final_report']).pretty_repr()
+        logger.info('Final output:')
+        AIMessage(response['final_report']).pretty_print()
 
     def plot_graph(self, path: Path):
         graph = self.agent.get_graph(xray=True).draw_mermaid_png()
@@ -125,10 +126,7 @@ Your task is to think about this topic and provide the best web search query to 
         paragraph = paragraphs[paragraph_index]
         logger.info(f'Processing paragraph {paragraph_index}, performing first search.')
 
-        user_prompt = f"""
-Title: {paragraph.title}
-Expected content: {paragraph.content}
-"""
+        user_prompt = f'Title: {paragraph.title}\nContent: {paragraph.content}'
         messages = [SystemMessage(prompt), HumanMessage(user_prompt)]
         try:
             ai_msg = llm_with_tools.invoke(messages)
@@ -138,8 +136,8 @@ Expected content: {paragraph.content}
             raise
         search_results = []
         for tool_call in ai_msg.tool_calls:
-            tool_results = tavily_search.invoke(tool_call['args'])
-            search_results.append(tool_results)
+            tool_result = tavily_search.run(tool_call['args'])
+            search_results.extend(tool_result)
 
         logger.info(f'A total of {len(search_results)} search results found')
         paragraph.research.search_history.extend(search_results)
@@ -161,10 +159,7 @@ Please generate the content directly, without producing irrelevant information.
         search_history = paragraph.research.search_history
         logger.info(f'Processing paragraph {paragraph_index}, performing first summary.')
 
-        user_prompt = f"""
-Title: {paragraph.title}
-Expected content: {paragraph.content}\n
-"""
+        user_prompt = f'Title: {paragraph.title}\nContent: {paragraph.content}\n'
         if len(search_history) > 0:
             user_prompt += f'Search query: {search_history[0].search_query}\n'
         for idx, search_result in enumerate(search_history):
@@ -218,8 +213,8 @@ Latest state: {paragraph.research.latest_summary}
             raise
         search_results = []
         for tool_call in ai_msg.tool_calls:
-            tool_results = tavily_search.invoke(tool_call['args'])
-            search_results.append(tool_results)
+            tool_result = tavily_search.run(tool_call['args'])
+            search_results.extend(tool_result)
 
         logger.info(f'A total of {len(search_results)} search results found')
         paragraph.research.search_history.extend(search_results)
