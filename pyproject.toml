@@ -11,9 +11,12 @@ dependencies = [
   "langchain-deepseek>=1.0.1",
   "langchain-openai>=1.1.0",
   "langgraph>=1.0.4",
+  "loguru>=0.7.3",
+  "pytest>=9.0.2",
   "rich>=14.2.0",
   "socksio>=1.0.0",
   "tavily-python>=0.7.23",
+  "typer>=0.24.1",
 ]
 
 [project.optional-dependencies]
