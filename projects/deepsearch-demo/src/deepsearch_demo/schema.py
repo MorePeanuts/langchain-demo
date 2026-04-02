@@ -16,7 +16,9 @@ class ReflectionSummary(BaseModel):
     stop_reflection: bool = Field(
         description='Whether to terminate iterative reflection. If you believe the information is sufficient and iterative thinking can be terminated, set this field to True.'
     )
-    summary: str = Field(description='Latest state of the paragraph')
+    summary: str = Field(
+        description='Updated paragraph status based on reflection and the latest information retrieved'
+    )
 
 
 class FinalReport(BaseModel):

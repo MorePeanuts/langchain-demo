@@ -347,7 +347,7 @@ Latest state: {paragraph.research.latest_summary}\n
             state.is_completed = True
             state.report_title = report.report_title
             state.save(state_path)
-            logger.info(f'State saved to {state_path}')
+            logger.info('State saved to report.md')
 
         return {
             'final_report': report.report_content,
