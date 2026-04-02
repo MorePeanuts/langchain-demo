@@ -1,3 +1,5 @@
+from typing import Literal
+from pathlib import Path
 import json
 from langchain.chat_models import init_chat_model
 from langchain.messages import SystemMessage, HumanMessage, AIMessage
@@ -33,10 +35,12 @@ class DeepSearchAgent:
         response = self.agent.invoke(self.state)
         return AIMessage(response['final_report']).pretty_repr()
 
-    def plot_graph(self):
-        raise NotImplementedError()
+    def plot_graph(self, path: Path):
+        graph = self.agent.get_graph(xray=True).draw_mermaid_png()
+        with path.open('wb') as f:
+            f.write(graph)
 
-    def generate_report_structure(self, state: State) -> Command:
+    def generate_report_structure(self, state: State) -> Command[Literal['first_search']]:
         logger.info('Generating the report structure based on the following query:')
 
         prompt = """
@@ -79,7 +83,7 @@ Once the outline is created, you will be provided with tools to search the web a
             goto='first_search',
         )
 
-    def first_search(self, state: State) -> Command:
+    def first_search(self, state: State) -> Command[Literal['first_summary']]:
         prompt = """
 You are an in-depth research assistant. You will be given the title and expected content of a paragraph from a report.
 
@@ -118,7 +122,7 @@ Expected content: {paragraph.content}
 
         return Command(update={'paragraphs': paragraphs}, goto='first_summary')
 
-    def first_summary(self, state: State) -> Command:
+    def first_summary(self, state: State) -> Command[Literal['reflection']]:
         prompt = """
 You are a deep research assistant. Please write a piece of content that aligns with the paragraph's theme based on the title, desired content of the target paragraph, and the information gathered from searches.
 
@@ -157,7 +161,7 @@ Expected content: {paragraph.content}\n
 
         return Command(update={'paragraphs': paragraphs}, goto='reflection')
 
-    def reflection(self, state: State) -> Command:
+    def reflection(self, state: State) -> Command[Literal['reflection_summary']]:
         prompt = """
 You are a deep research assistant, responsible for studying reports and constructing comprehensive paragraphs. You will be provided with paragraph titles, summaries of planned content, and the latest status of paragraphs you have already created.
 
@@ -198,7 +202,9 @@ Latest state: {paragraph.research.latest_summary}
 
         return Command(update={'paragraphs': paragraphs}, goto='reflection_summary')
 
-    def reflection_summary(self, state: State) -> Command:
+    def reflection_summary(
+        self, state: State
+    ) -> Command[Literal['first_search', 'generate_final_report', 'reflection']]:
         prompt = """
 You are a deep research assistant.
 
@@ -269,7 +275,7 @@ Paragraph latest state: {paragraph.research.latest_summary}
             goto=goto,
         )
 
-    def generate_final_report(self, state: State) -> Command:
+    def generate_final_report(self, state: State):
         prompt = """
 You are a deep research assistant. You have completed the research and constructed the final version of all paragraphs in the report.
 
@@ -305,10 +311,8 @@ Latest state: {paragraph.research.latest_summary}\n
             logger.exception('Exception occurred while running generate_final_report.')
             raise
 
-        return Command(
-            update={
-                'final_report': response.report_content,
-                'is_completed': True,
-                'report_title': response.report_title,
-            }
-        )
+        return {
+            'final_report': response.report_content,
+            'is_completed': True,
+            'report_title': response.report_title,
+        }
