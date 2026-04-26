@@ -1,5 +1,4 @@
 from enum import Enum
-from langchain.chat_models import init_chat_model
 
 
 class ModelRegistry(Enum):
@@ -32,6 +31,11 @@ class ModelRegistry(Enum):
         'extra_body': {'thinking': {'type': 'enabled'}},
     }
 
+    def __iter__(self):
+        return iter(self.value.items())
 
-def get_chat_model(model: ModelRegistry):
-    return init_chat_model(**model.value)  # type: ignore
+    def keys(self):
+        return self.value.keys()
+
+    def __getitem__(self, key):
+        return self.value[key]
