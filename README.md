@@ -1,6 +1,6 @@
-# LangChain Agent Learning Project
+# Agent Lab
 
-A workspace for learning and exploring Agent design patterns within the LangChain ecosystem.
+Personal collection of explorations, experiments, and prototypes in the Agentic Workflow domain.
 
 ## Overview
 
@@ -9,7 +9,7 @@ This project serves as a learning platform for understanding and building intell
 ## Project Structure
 
 ```
-langchain-demo/
+agent-lab/
 ├── langchain-examples/     # Examples exploring LangChain library usage
 ├── langgraph-examples/     # Examples exploring LangGraph library usage
 ├── deepagent-examples/     # Examples exploring DeepAgent library usage

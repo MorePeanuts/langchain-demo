@@ -1,7 +1,7 @@
 [project]
-name = "langchain-demo"
+name = "agent-lab"
 version = "0.1.0"
-description = "Workspace for managing langchain demo projects"
+description = "Workspace for managing agent demo projects"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
