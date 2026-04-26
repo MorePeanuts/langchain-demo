@@ -39,3 +39,7 @@ class ModelRegistry(Enum):
 
     def __getitem__(self, key):
         return self.value[key]
+
+
+LLM_FAST = ModelRegistry.DEEPSEEK_V4_FLASH
+LLM_THINKING = ModelRegistry.DEEPSEEK_V4_FLASH_THINKING
