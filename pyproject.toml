@@ -24,6 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 deepsearch = ["deepsearch-demo"]
 dataagent = ['dataagent-demo']
+chatbot = ['chatbot']
 
 [build-system]
 requires = ["uv_build>=0.8.22,<0.9.0"]
@@ -32,6 +33,7 @@ build-backend = "uv_build"
 [tool.uv.sources]
 deepsearch-demo = { workspace = true }
 dataagent-demo = { workspace = true }
+chatbot = { workspace = true }
 
 [tool.uv.workspace]
 members = ["projects/*"]
